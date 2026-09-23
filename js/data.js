@@ -101,6 +101,7 @@ export function splitWord(word) {
 // Instructies en aanmoedigingen. De ouder kan elk ervan zelf inspreken;
 // anders gebruikt de app de ingebouwde (Vlaamse) stem van het toestel.
 export const PHRASES = {
+  hallo:   'Hallo [naam]! (welkomstwoord)',  // zonder opname: "Hallo" + de naam uit de instellingen
   hoor:    'Welke letter hoor je?',
   klank:   'Tik op de knopjes en luister. Welke klank hoort bij deze letter?',
   begin:   'Met welke letter begint dit woord?',
@@ -116,4 +117,10 @@ export const PHRASES = {
   toets:   'Dit is de toets. Probeer alles juist te doen!',
   geslaagd:'Joepie! Je kent deze letter nu!',
   bijna:   'Bijna! Nog even oefenen en dan probeer je opnieuw.',
+  zegt:    'Deze letter zegt:',
+  twee:    'Dit zijn twee letters samen. Samen zeggen ze:',
+  oefenen: 'Goed zo! Nu gaan we oefenen.',
+  later:   'Die letter komt later!',
+  meer:    'Eerst nog wat meer letters leren!',
+  joepie:  'Joepie! Ga het maar aan mama of papa vertellen!',
 };

@@ -12,8 +12,8 @@
 // Opnames zitten in een aparte collectie (1 document per opname), en in het
 // hoofddocument staat per opname enkel een versienummer (state.audio).
 
-import { firebaseConfig } from './firebase-config.js?v=2';
-import * as audio from './audio.js?v=2';
+import { firebaseConfig } from './firebase-config.js?v=3';
+import * as audio from './audio.js?v=3';
 
 const LS_KEY = 'letterland-state-v1';
 const DOC_PATH = ['progress', 'letterland-familie'];
@@ -157,6 +157,8 @@ export let syncStatus = firebaseConfig ? 'verbinden…' : 'enkel op dit toestel 
 
 export async function initSync() {
   if (!firebaseConfig) return;
+  // …/?nosync: testen zonder de gedeelde familiegegevens aan te raken.
+  if (location.search.includes('nosync')) { syncStatus = 'uitgeschakeld (testmodus)'; return; }
   try {
     const base = `https://www.gstatic.com/firebasejs/${FB_VERSION}/`;
     const [{ initializeApp }, fs] = await Promise.all([

@@ -1,8 +1,8 @@
 // Letterland — hoofdscript: schermen, oefeningen, toets, woorden, beloningen, instellingen.
 
-import { LETTERS, LETTER_BY_ID, WORDS, PHRASES, soundsAlike } from './js/data.js?v=2';
-import * as A from './js/audio.js?v=2';
-import * as S from './js/store.js?v=2';
+import { LETTERS, LETTER_BY_ID, WORDS, PHRASES, soundsAlike } from './js/data.js?v=3';
+import * as A from './js/audio.js?v=3';
+import * as S from './js/store.js?v=3';
 
 const SESSION_LEN = 10;   // oefeningen per sessie
 const TOETS_LEN = 6;      // vragen in een toets (alles moet juist zijn)
@@ -111,10 +111,15 @@ function splash() {
     go: () => {
       A.unlock();
       home();
-      const name = st().name;
-      A.play(['text', name ? `Hallo ${name}!` : 'Hallo!']);
+      greet();
     },
   });
+}
+
+// Welkomstwoord: de opname van de ouder, of anders "Hallo" + naam via de iPhone-stem.
+function greet() {
+  const name = st().name;
+  A.play(['phrase', 'hallo', name ? `Hallo ${name}!` : 'Hallo!']);
 }
 
 // ---------- Home ----------
@@ -159,15 +164,15 @@ function home() {
       ${blocks}
     </section>`, {
     settings: parentGate,
-    hello: () => A.play(['text', s.name ? `Hallo ${s.name}!` : 'Hallo!']),
+    hello: greet,
     practice: startPractice,
     toets: () => startToets(cur),
-    words: () => wOpen ? startWords() : A.play(['text', 'Eerst nog wat meer letters leren!']),
+    words: () => wOpen ? startWords() : A.play(['phrase', 'meer']),
     rewards: rewardsScreen,
     card: el => {
       const id = el.dataset.id;
       if (passed(id) || id === cur) letterCard(id);
-      else A.play(['text', 'Die letter komt later!']);
+      else A.play(['phrase', 'later']);
     },
   });
 }
@@ -221,8 +226,8 @@ function lesson(id) {
       sound: L.name && id.length === 1
         ? [['text', `Deze letter heet ${L.name}. Maar hij zegt:`], 200, ['letter', id]]
         : id.length > 1
-          ? [['text', `Dit zijn twee letters samen. Samen zeggen ze:`], 200, ['letter', id]]
-          : [['text', 'Deze letter zegt:'], 200, ['letter', id]],
+          ? [['phrase', 'twee'], 200, ['letter', id]]
+          : [['phrase', 'zegt'], 200, ['letter', id]],
     },
     {
       html: `<div class="lesson-letter">${glyph(id)}</div>
@@ -258,7 +263,7 @@ function lesson(id) {
           <div class="speech">Goed zo! Nu gaan we oefenen.</div>
           <button class="btn btn-green btn-xl pulse" data-act="go">▶</button>
         </div>`, { go: () => startRun(buildLetterSession(), 'practice') });
-      A.play(['text', 'Goed zo! Nu gaan we oefenen.']);
+      A.play(['phrase', 'oefenen']);
     });
   };
   show();
@@ -689,7 +694,7 @@ function confirmRedeem(r) {
       });
       overlay.remove();
       confetti(60);
-      A.play(['text', 'Joepie! Ga het maar aan mama of papa vertellen!']);
+      A.play(['phrase', 'joepie']);
       rewardsScreen();
     } else if (e.target.closest('[data-no]') || e.target === overlay) {
       overlay.remove();
@@ -769,8 +774,8 @@ function settings(openSections = new Set(['klanken'])) {
       </details>
 
       <details class="card" data-sec="zinnen" ${open('zinnen')}>
-        <summary>💬 Zinnetjes inspreken <span class="muted">(optioneel)</span></summary>
-        <p class="muted">Niet ingesproken? Dan leest de stem van de iPhone ze voor.</p>
+        <summary>💬 Welkomstwoord & zinnetjes <span class="muted">(optioneel)</span></summary>
+        <p class="muted">Niet ingesproken? Dan leest de stem van de iPhone ze voor. Het welkomstwoord hoort ze bij het openen van de app en als ze op de panda tikt: zeg gerust haar naam erbij.</p>
         ${Object.entries(PHRASES).map(([id, text]) => recRow(A.phraseKey(id), esc(text))).join('')}
       </details>
 
@@ -849,7 +854,7 @@ function settings(openSections = new Set(['klanken'])) {
       rerender();
     },
     reset: () => {
-      if (!confirm('Alle voortgang (letters, woorden, sterren) wissen?')) return;
+      if (!confirm('Alle voortgang (letters, woorden, sterren) wissen?\n\nJe opnames, beloningen, naam en instellingen blijven bewaard.')) return;
       if (!confirm('Echt zeker? Dit kan niet ongedaan gemaakt worden.')) return;
       S.resetProgress();
       rerender();

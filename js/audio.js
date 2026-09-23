@@ -7,7 +7,7 @@
 // audio-element pas geluid maken nadat het één keer binnen een tik van de
 // gebruiker gestart is (zie unlock()), daarna mag het vrij afspelen.
 
-import { LETTER_BY_ID, PHRASES } from './data.js?v=2';
+import { LETTER_BY_ID, PHRASES } from './data.js?v=3';
 
 const clips = new Map();     // sleutel -> { url, v }
 const player = new Audio();
@@ -158,9 +158,10 @@ function playUrl(url, gen) {
 // ---------- Afspelen ----------
 // Een "stuk" is { key, text }: de opname als die er is, anders de tekst via spraak.
 
-function pieceFor(kind, id) {
+// Bij 'phrase' mag een derde element de terugvaltekst vervangen, bv. ['phrase', 'hallo', 'Hallo Lotte!'].
+function pieceFor(kind, id, alt) {
   if (kind === 'letter') return { key: letterKey(id), text: LETTER_BY_ID[id]?.say || id };
-  if (kind === 'phrase') return { key: phraseKey(id), text: PHRASES[id] };
+  if (kind === 'phrase') return { key: phraseKey(id), text: alt ?? PHRASES[id] };
   if (kind === 'word') return { key: wordKey(id), text: id };
   if (kind === 'text') return { key: null, text: id };
   throw new Error('onbekend geluid ' + kind);
@@ -191,7 +192,7 @@ export async function play(...items) {
     if (gen !== generation) return false;
     if (typeof it === 'number') { await wait(it); continue; }
     onStep && onStep(step++);
-    await playPiece(pieceFor(it[0], it[1]), gen);
+    await playPiece(pieceFor(it[0], it[1], it[2]), gen);
     await wait(120);
   }
   return gen === generation;
