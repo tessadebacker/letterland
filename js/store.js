@@ -12,8 +12,8 @@
 // Opnames zitten in een aparte collectie (1 document per opname), en in het
 // hoofddocument staat per opname enkel een versienummer (state.audio).
 
-import { firebaseConfig } from './firebase-config.js';
-import * as audio from './audio.js';
+import { firebaseConfig } from './firebase-config.js?v=2';
+import * as audio from './audio.js?v=2';
 
 const LS_KEY = 'letterland-state-v1';
 const DOC_PATH = ['progress', 'letterland-familie'];

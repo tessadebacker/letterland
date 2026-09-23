@@ -26,6 +26,12 @@ Gebouwd volgens dezelfde architectuur als [Tafels Kampioen](https://github.com/t
 - Woorden worden pas vrijgegeven als alle klanken erin gekend zijn (vanaf 3 woorden gaat "Woorden" open).
 - Instellingen (⚙️) zitten achter een rekensommetje (ouderpoort).
 
+## Updates uitrollen
+
+Alle verwijzingen naar bestanden dragen een versienummer (`?v=2`), in `index.html` én in de
+`import`-regels van alle `.js`-bestanden. Verhoog dat nummer **overal tegelijk** bij elke update,
+zodat de iPhone geen mix van oude (gecachte) en nieuwe bestanden gebruikt.
+
 ## Lokaal testen
 
 ```bash

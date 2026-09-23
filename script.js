@@ -1,8 +1,8 @@
 // Letterland — hoofdscript: schermen, oefeningen, toets, woorden, beloningen, instellingen.
 
-import { LETTERS, LETTER_BY_ID, WORDS, PHRASES, soundsAlike } from './js/data.js';
-import * as A from './js/audio.js';
-import * as S from './js/store.js';
+import { LETTERS, LETTER_BY_ID, WORDS, PHRASES, soundsAlike } from './js/data.js?v=2';
+import * as A from './js/audio.js?v=2';
+import * as S from './js/store.js?v=2';
 
 const SESSION_LEN = 10;   // oefeningen per sessie
 const TOETS_LEN = 6;      // vragen in een toets (alles moet juist zijn)
@@ -868,13 +868,20 @@ function settings(openSections = new Set(['klanken'])) {
         refreshRow(key);
         const blob = await ctrl.result;
         recording = null;
+        if (!blob) {
+          refreshRow(key);
+          alert('Ik hoorde niets. Probeer opnieuw en spreek iets luider, dicht bij de telefoon.');
+          return;
+        }
         await S.saveRecording(key, blob);
         refreshRow(key);
         A.play(key.startsWith('k_') ? ['letter', key.slice(2)] : key.startsWith('p_') ? ['phrase', key.slice(2)] : ['word', key.slice(2)]);
       } catch (e) {
         recording = null;
         refreshRow(key);
-        alert('Opnemen lukt niet. Geef de app toestemming om de microfoon te gebruiken.\n\n(' + e.message + ')');
+        alert(e.name === 'NotAllowedError'
+          ? 'De app mag de microfoon niet gebruiken.\n\nOp de iPhone: Instellingen → Apps → Safari → Microfoon → kies "Vraag" of "Sta toe". Sluit Letterland daarna helemaal af en open opnieuw.'
+          : 'Opnemen lukt niet (' + (e.name || '') + ': ' + e.message + ')');
       }
     },
     playrec: el => {

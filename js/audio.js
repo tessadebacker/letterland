@@ -7,7 +7,7 @@
 // audio-element pas geluid maken nadat het één keer binnen een tik van de
 // gebruiker gestart is (zie unlock()), daarna mag het vrij afspelen.
 
-import { LETTER_BY_ID, PHRASES } from './data.js';
+import { LETTER_BY_ID, PHRASES } from './data.js?v=2';
 
 const clips = new Map();     // sleutel -> { url, v }
 const player = new Audio();
@@ -59,8 +59,13 @@ export async function initAudio() {
     pickVoice();
     speechSynthesis.onvoiceschanged = pickVoice;
   }
-  // Safari 16.4+: laat geluid ook spelen als de iPhone op stil staat.
-  try { if (navigator.audioSession) navigator.audioSession.type = 'playback'; } catch (e) {}
+  setSession('playback');
+}
+
+// Safari 16.4+: 'playback' laat geluid ook spelen als de iPhone op stil staat,
+// maar blokkeert de microfoon. Tijdens het opnemen schakelen we naar 'play-and-record'.
+function setSession(type) {
+  try { if (navigator.audioSession) navigator.audioSession.type = type; } catch (e) {}
 }
 
 export const hasClip = key => clips.has(key);
@@ -217,11 +222,29 @@ const SILENT_WAV = 'data:audio/wav;base64,UklGRiQAAABXQVZFZm10IBAAAAABAAEAQB8AAI
 // automatisch weggeknipt en het volume wordt gelijkgetrokken.
 
 export async function startRecording(maxMs = 3000) {
-  const stream = await navigator.mediaDevices.getUserMedia({
-    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-  });
+  // De AudioContext moet nog binnen de tik aangemaakt en gestart worden:
+  // na een await staat hij op iOS anders op "suspended" en neem je enkel stilte op.
+  stopAll();
+  setSession('play-and-record');
   const Ctx = window.AudioContext || window.webkitAudioContext;
   const ctx = new Ctx();
+  ctx.resume();
+  if (!navigator.mediaDevices?.getUserMedia) {
+    ctx.close();
+    setSession('playback');
+    throw new Error('Deze browser laat geen opnames toe');
+  }
+  let stream;
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+    });
+  } catch (e) {
+    ctx.close();
+    setSession('playback');
+    throw e;
+  }
+  await ctx.resume();
   const src = ctx.createMediaStreamSource(stream);
   const proc = ctx.createScriptProcessor(4096, 1, 1);
   const chunks = [];
@@ -240,7 +263,9 @@ export async function startRecording(maxMs = 3000) {
     stream.getTracks().forEach(t => t.stop());
     const rate = ctx.sampleRate;
     ctx.close();
-    resolveStop(encodeWav(trimAndNormalize(concat(chunks), rate), rate));
+    setSession('playback');
+    const samples = trimAndNormalize(concat(chunks), rate);
+    resolveStop(samples ? encodeWav(samples, rate) : null); // null = enkel stilte opgenomen
     return result;
   };
   const timer = setTimeout(stop, maxMs);
@@ -257,7 +282,7 @@ function concat(chunks) {
 function trimAndNormalize(s, rate) {
   let peak = 0;
   for (let i = 0; i < s.length; i++) peak = Math.max(peak, Math.abs(s[i]));
-  if (peak < 0.01) return s; // enkel stilte; laat zoals het is
+  if (peak < 0.01) return null; // enkel stilte
   const th = Math.max(0.02, peak * 0.08);
   let a = 0, b = s.length - 1;
   while (a < s.length && Math.abs(s[a]) < th) a++;
